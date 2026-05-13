@@ -6,11 +6,13 @@ ARG TARGETOS=linux
 ARG TARGETARCH
 
 ADD . /litmus-go
+ADD chaos-operator /chaos-operator
 WORKDIR /litmus-go
 
 RUN export GOOS=${TARGETOS} && \
     export GOARCH=${TARGETARCH}
 
+RUN go mod tidy
 RUN CGO_ENABLED=0 go build -o /output/experiments ./bin/experiment
 RUN CGO_ENABLED=0 go build -o /output/helpers ./bin/helper
 

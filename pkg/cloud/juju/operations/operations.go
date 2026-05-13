@@ -2,6 +2,7 @@ package operations
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -131,13 +132,101 @@ type JujuStatus struct {
 
 // ApplicationStatus represents an application's status in `juju status`.
 type ApplicationStatus struct {
-	ApplicationStatus StatusInfo `json:"application-status"`
+	ApplicationStatus StatusInfo            `json:"application-status"`
+	Units             map[string]UnitStatus `json:"units,omitempty"`
+}
+
+// UnitStatus represents a unit's status in `juju status`.
+type UnitStatus struct {
+	WorkloadStatus  StatusInfo `json:"workload-status"`
+	JujuStatus      StatusInfo `json:"juju-status"`
 }
 
 // StatusInfo holds status details.
 type StatusInfo struct {
 	Current string `json:"current"`
 	Message string `json:"message"`
+	Since   string `json:"since,omitempty"`
+}
+
+// StatusResult holds the full status check result for probe comparators.
+type StatusResult struct {
+	Current string `json:"current"`
+	Message string `json:"message"`
+	Since   string `json:"since,omitempty"`
+}
+
+// GetApplicationStatus returns the current status of a Juju application.
+func GetApplicationStatus(ctx context.Context, client *common.JujuClient, app string) (*StatusResult, error) {
+	var status JujuStatus
+	if err := client.RunJSON(ctx, &status, "status", app); err != nil {
+		return nil, fmt.Errorf("failed to get juju status: %w", err)
+	}
+	appStatus, ok := status.Applications[app]
+	if !ok {
+		return nil, fmt.Errorf("application %s not found in juju status", app)
+	}
+	return &StatusResult{
+		Current: appStatus.ApplicationStatus.Current,
+		Message: appStatus.ApplicationStatus.Message,
+		Since:   appStatus.ApplicationStatus.Since,
+	}, nil
+}
+
+// GetUnitStatus returns the workload status of a specific Juju unit.
+func GetUnitStatus(ctx context.Context, client *common.JujuClient, unitName string) (*StatusResult, error) {
+	// Extract app name from unit name (e.g. "mysql/0" -> "mysql")
+	parts := strings.SplitN(unitName, "/", 2)
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid unit name %q: expected format app/N", unitName)
+	}
+	appName := parts[0]
+
+	var status JujuStatus
+	if err := client.RunJSON(ctx, &status, "status", appName); err != nil {
+		return nil, fmt.Errorf("failed to get juju status: %w", err)
+	}
+	appStatus, ok := status.Applications[appName]
+	if !ok {
+		return nil, fmt.Errorf("application %s not found in juju status", appName)
+	}
+	unit, ok := appStatus.Units[unitName]
+	if !ok {
+		return nil, fmt.Errorf("unit %s not found in juju status", unitName)
+	}
+	return &StatusResult{
+		Current: unit.WorkloadStatus.Current,
+		Message: unit.WorkloadStatus.Message,
+		Since:   unit.WorkloadStatus.Since,
+	}, nil
+}
+
+// PebbleServiceInfo holds pebble service status from `pebble services --format=json`.
+type PebbleServiceInfo struct {
+	Name    string `json:"name"`
+	Current string `json:"current"`
+}
+
+// GetPebbleServiceStatus returns the status of a pebble service on a Juju unit.
+func GetPebbleServiceStatus(ctx context.Context, client *common.JujuClient, unitName, serviceName string) (*StatusResult, error) {
+	output, err := client.Run(ctx, "ssh", unitName, "pebble", "services", serviceName, "--format=json")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pebble service status on %s: %w", unitName, err)
+	}
+
+	var services []PebbleServiceInfo
+	if err := json.Unmarshal([]byte(output), &services); err != nil {
+		return nil, fmt.Errorf("failed to parse pebble services output: %w", err)
+	}
+
+	for _, svc := range services {
+		if svc.Name == serviceName {
+			return &StatusResult{
+				Current: svc.Current,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("pebble service %q not found on unit %s", serviceName, unitName)
 }
 
 // WaitForApplicationStatus polls until the application reaches the target status or timeout.

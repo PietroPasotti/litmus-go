@@ -352,6 +352,27 @@ func execute(probe v1alpha1.ProbeAttributes, chaosDetails *types.ChaosDetails, c
 		if err = preparePromProbe(probe, clients, chaosDetails, resultDetails, phase); err != nil {
 			return stacktrace.Propagate(err, "probes failed")
 		}
+	case "jujuappprobe":
+		if !isJujuExperiment(chaosDetails.ExperimentName) {
+			return stacktrace.Propagate(cerrors.Error{ErrorCode: cerrors.ErrorTypeJujuAppProbe, Target: fmt.Sprintf("{name: %v}", probe.Name), Reason: "jujuAppProbe can only be used with juju experiments"}, "probes failed")
+		}
+		if err = prepareJujuAppProbe(probe, clients, chaosDetails, resultDetails, phase); err != nil {
+			return stacktrace.Propagate(err, "probes failed")
+		}
+	case "jujuunitprobe":
+		if !isJujuExperiment(chaosDetails.ExperimentName) {
+			return stacktrace.Propagate(cerrors.Error{ErrorCode: cerrors.ErrorTypeJujuUnitProbe, Target: fmt.Sprintf("{name: %v}", probe.Name), Reason: "jujuUnitProbe can only be used with juju experiments"}, "probes failed")
+		}
+		if err = prepareJujuUnitProbe(probe, clients, chaosDetails, resultDetails, phase); err != nil {
+			return stacktrace.Propagate(err, "probes failed")
+		}
+	case "jujupebbleprobe":
+		if !isJujuExperiment(chaosDetails.ExperimentName) {
+			return stacktrace.Propagate(cerrors.Error{ErrorCode: cerrors.ErrorTypeJujuPebbleProbe, Target: fmt.Sprintf("{name: %v}", probe.Name), Reason: "jujuPebbleProbe can only be used with juju experiments"}, "probes failed")
+		}
+		if err = prepareJujuPebbleProbe(probe, clients, chaosDetails, resultDetails, phase); err != nil {
+			return stacktrace.Propagate(err, "probes failed")
+		}
 	default:
 		return stacktrace.Propagate(err, "%v probe type not supported", probe.Type)
 	}
@@ -388,7 +409,9 @@ func getAttempts(attempt, retries int) int {
 
 func IsProbeFailed(reason string) bool {
 	if strings.Contains(reason, string(cerrors.FailureTypeK8sProbe)) || strings.Contains(reason, string(cerrors.FailureTypePromProbe)) ||
-		strings.Contains(reason, string(cerrors.FailureTypeCmdProbe)) || strings.Contains(reason, string(cerrors.FailureTypeHttpProbe)) {
+		strings.Contains(reason, string(cerrors.FailureTypeCmdProbe)) || strings.Contains(reason, string(cerrors.FailureTypeHttpProbe)) ||
+		strings.Contains(reason, string(cerrors.FailureTypeJujuAppProbe)) || strings.Contains(reason, string(cerrors.FailureTypeJujuUnitProbe)) ||
+		strings.Contains(reason, string(cerrors.FailureTypeJujuPebbleProbe)) {
 		return true
 	}
 	return false

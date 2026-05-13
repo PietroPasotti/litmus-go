@@ -28,6 +28,12 @@ const (
 	FailureTypeHttpProbe       ErrorType = "HTTP_PROBE_FAILURE"
 	ErrorTypePromProbe         ErrorType = "PROM_PROBE_ERROR"
 	FailureTypePromProbe       ErrorType = "PROM_PROBE_FAILURE"
+	ErrorTypeJujuAppProbe      ErrorType = "JUJU_APP_PROBE_ERROR"
+	FailureTypeJujuAppProbe    ErrorType = "JUJU_APP_PROBE_FAILURE"
+	ErrorTypeJujuUnitProbe     ErrorType = "JUJU_UNIT_PROBE_ERROR"
+	FailureTypeJujuUnitProbe   ErrorType = "JUJU_UNIT_PROBE_FAILURE"
+	ErrorTypeJujuPebbleProbe   ErrorType = "JUJU_PEBBLE_PROBE_ERROR"
+	FailureTypeJujuPebbleProbe ErrorType = "JUJU_PEBBLE_PROBE_FAILURE"
 	ErrorTypeTimeout           ErrorType = "TIMEOUT"
 	FailureTypeProbeTimeout    ErrorType = "PROBE_TIMEOUT"
 )
