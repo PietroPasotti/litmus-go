@@ -52,6 +52,15 @@ RUN curl -L https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.31
     tar zxvf crictl-v1.31.1-linux-${TARGETARCH}.tar.gz -C /sbin && \
     chmod 755 /sbin/crictl
 
+#Installing Juju CLI
+ENV JUJU_VERSION="3.6.1"
+RUN yum install -y xz && \
+    curl -L https://launchpad.net/juju/${JUJU_VERSION%.*}/${JUJU_VERSION}/+download/juju-${JUJU_VERSION}-linux-${TARGETARCH}.tar.xz --output juju.tar.xz && \
+    tar xf juju.tar.xz --strip-components=0 -C /usr/bin/ ./juju && \
+    chmod 755 /usr/bin/juju && \
+    rm juju.tar.xz && \
+    yum remove -y xz && yum clean all
+
 #Installing promql cli binaries
 RUN curl -L https://github.com/chaosnative/promql-cli/releases/download/3.0.0-beta6/promql_linux_${TARGETARCH} --output /usr/bin/promql && chmod 755 /usr/bin/promql
 

@@ -67,6 +67,16 @@ import (
 	k6Loadgen "github.com/litmuschaos/litmus-go/experiments/load/k6-loadgen/experiment"
 	springBootFaults "github.com/litmuschaos/litmus-go/experiments/spring-boot/spring-boot-faults/experiment"
 	vmpoweroff "github.com/litmuschaos/litmus-go/experiments/vmware/vm-poweroff/experiment"
+
+	jujuAddApp "github.com/litmuschaos/litmus-go/experiments/juju/juju-add-app/experiment"
+	jujuAddUnit "github.com/litmuschaos/litmus-go/experiments/juju/juju-add-unit/experiment"
+	jujuIntegrate "github.com/litmuschaos/litmus-go/experiments/juju/juju-integrate/experiment"
+	jujuRemoveApp "github.com/litmuschaos/litmus-go/experiments/juju/juju-remove-app/experiment"
+	jujuRemoveRelation "github.com/litmuschaos/litmus-go/experiments/juju/juju-remove-relation/experiment"
+	jujuRemoveUnit "github.com/litmuschaos/litmus-go/experiments/juju/juju-remove-unit/experiment"
+	jujuRunAction "github.com/litmuschaos/litmus-go/experiments/juju/juju-run-action/experiment"
+	jujuSetConfig "github.com/litmuschaos/litmus-go/experiments/juju/juju-set-config/experiment"
+
 	cli "github.com/litmuschaos/litmus-go/pkg/clients"
 	"github.com/litmuschaos/litmus-go/pkg/log"
 	"github.com/litmuschaos/litmus-go/pkg/telemetry"
@@ -216,6 +226,22 @@ func main() {
 		springBootFaults.Experiment(ctx, clients, *experimentName)
 	case "k6-loadgen":
 		k6Loadgen.Experiment(ctx, clients)
+	case "juju-integrate":
+		jujuIntegrate.JujuIntegrate(ctx, clients)
+	case "juju-remove-relation":
+		jujuRemoveRelation.JujuRemoveRelation(ctx, clients)
+	case "juju-add-unit":
+		jujuAddUnit.JujuAddUnit(ctx, clients)
+	case "juju-remove-unit":
+		jujuRemoveUnit.JujuRemoveUnit(ctx, clients)
+	case "juju-add-app":
+		jujuAddApp.JujuAddApp(ctx, clients)
+	case "juju-remove-app":
+		jujuRemoveApp.JujuRemoveApp(ctx, clients)
+	case "juju-set-config":
+		jujuSetConfig.JujuSetConfig(ctx, clients)
+	case "juju-run-action":
+		jujuRunAction.JujuRunAction(ctx, clients)
 	default:
 		log.Errorf("Unsupported -name %v, please provide the correct value of -name args", *experimentName)
 		return
